@@ -224,3 +224,88 @@ function addKey() {
   }
   input.value = '';
 }
+function generateCSVContent() {
+  const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
+  if (logs.length === 0) return null;
+
+  const headers = ["Name", "Phone", "Company", "Trade", "PPE", "Risk", "Hazard", "Other", "Key", "SignIn Time", "SignOut Time"];
+  const rows = logs.map(log => [
+    log.name, log.phone, log.company, log.trade || '',
+    log.ppe, log.risk, log.hazard, log.other || '',
+    log.key || '', log.signInTime, log.signOutTime || ''
+  ]);
+  return [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+}
+
+function exportAndEmailAndClear() {
+  const csvContent = generateCSVContent();
+  if (!csvContent) {
+    alert("No data to export.");
+    return;
+  }
+
+  // Export locally
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const timestamp = new Date().toISOString().replace(/[:]/g, '-');
+  a.href = url;
+  a.download = `sign-in-logs-${timestamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Email
+  emailjs.send("service_z2jwxfw", "template_6yxcugi", {
+    message: csvContent,
+    to_email: "agurha1999@gmail.com",
+    subject: "Weekly Contractor Logs"
+  }).then(() => {
+    alert("CSV emailed successfully.");
+  }).catch((error) => {
+    console.error("EmailJS failed:", error);
+    alert("Failed to send email.");
+  }).finally(() => {
+    localStorage.removeItem('signInLogs');
+    renderActiveWorkers();
+  });
+}
+
+function emailLogsOnly() {
+  const csvContent = generateCSVContent();
+  if (!csvContent) {
+    alert("No logs to email.");
+    return;
+  }
+
+  emailjs.send("service_z2jwxfw", "template_6yxcugi", {
+    message: csvContent,
+    to_email: "agurha1999@gmail.com",
+    subject: "Contractor Logs Snapshot"
+  }).then(() => {
+    alert("Logs emailed successfully.");
+  }).catch((error) => {
+    console.error("EmailJS failed:", error);
+    alert("Failed to send email.");
+  });
+}
+
+function exportLogsOnly() {
+  const csvContent = generateCSVContent();
+  if (!csvContent) {
+    alert("No logs to export.");
+    return;
+  }
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const timestamp = new Date().toISOString().replace(/[:]/g, '-');
+  a.href = url;
+  a.download = `sign-in-logs-${timestamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
