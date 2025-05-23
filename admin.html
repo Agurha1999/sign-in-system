@@ -64,18 +64,8 @@
   </script>
 
   <script>
-    // 🛑 Redirect if not admin
     if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
       window.location.href = 'login.html';
-    }
-
-    function logout() {
-      localStorage.removeItem('isAdminLoggedIn');
-      window.location.href = 'login.html';
-    }
-
-    function goHome() {
-      window.location.href = 'index.html';
     }
 
     function renderActiveWorkers() {
@@ -164,9 +154,12 @@
       input.value = '';
     }
 
-    function generateCSVContent() {
+    function exportAndEmailAndClear() {
       const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
-      if (logs.length === 0) return null;
+      if (logs.length === 0) {
+        alert("No data to export.");
+        return;
+      }
 
       const headers = ["Name", "Phone", "Company", "Trade", "PPE", "Risk", "Hazard", "Other", "Key", "SignIn Time", "SignOut Time"];
       const rows = logs.map(log => [
@@ -175,21 +168,13 @@
         log.key || '', log.signInTime, log.signOutTime || ''
       ]);
 
-      return [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
-    }
-
-    function exportAndEmailAndClear() {
-      const csvContent = generateCSVContent();
-      if (!csvContent) {
-        alert("No data to export.");
-        return;
-      }
+      const csvContent = [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sign-in-logs-${new Date().toISOString().replace(/[:]/g, '-')}.csv`;
+      a.download = `sign-in-logs-${new Date().toISOString().slice(0,10)}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -197,8 +182,7 @@
 
       emailjs.send("service_z2jwxfw", "template_6yxcugi", {
         message: csvContent,
-        to_email: "agurha1999@gmail.com",
-        subject: "Weekly Contractor Logs"
+        to_email: "agurha1999@gmail.com"
       }).then(() => {
         alert("CSV emailed successfully.");
       }).catch((error) => {
@@ -206,52 +190,35 @@
         alert("Failed to send email.");
       }).finally(() => {
         localStorage.removeItem('signInLogs');
+        localStorage.setItem('lastExport', new Date().toISOString().split('T')[0]);
         renderActiveWorkers();
       });
     }
 
-    function emailLogsOnly() {
-      const csvContent = generateCSVContent();
-      if (!csvContent) {
-        alert("No logs to email.");
-        return;
-      }
-
-      emailjs.send("service_z2jwxfw", "template_6yxcugi", {
-        message: csvContent,
-        to_email: "agurha1999@gmail.com",
-        subject: "Contractor Logs Snapshot"
-      }).then(() => {
-        alert("Logs emailed successfully.");
-      }).catch((error) => {
-        console.error("EmailJS failed:", error);
-        alert("Failed to send email.");
-      });
+    function logout() {
+      localStorage.removeItem('isAdminLoggedIn');
+      window.location.href = 'login.html';
     }
 
-    function exportLogsOnly() {
-      const csvContent = generateCSVContent();
-      if (!csvContent) {
-        alert("No logs to export.");
-        return;
-      }
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sign-in-logs-${new Date().toISOString().replace(/[:]/g, '-')}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    function goHome() {
+      window.location.href = 'index.html';
     }
 
-    // 🔄 Initialize
+    function checkWeeklyExport() {
+      const now = new Date();
+      const lastExport = localStorage.getItem('lastExport') || '';
+      const todayStr = now.toISOString().split('T')[0];
+
+      if (now.getDay() === 0 && now.getHours() === 22 && lastExport !== todayStr) {
+        exportAndEmailAndClear();
+      }
+    }
+
+    // Run weekly check every minute
+    setInterval(checkWeeklyExport, 60 * 1000);
+
     renderKeys();
     renderActiveWorkers();
   </script>
 </body>
 </html>
-
-
