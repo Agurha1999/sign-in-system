@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Contractor Sign In/Out</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  input, select, button { margin: 5px 0; padding: 6px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 20px;}
+  th, td { border: 1px solid #ddd; padding: 8px; }
+  th { background-color: #eee; }
+</style>
+</head>
+<body>
+
+<h2>Contractor Sign-In/Sign-Out</h2>
+
+<form id="signForm">
+  <input type="text" id="name" placeholder="Name" required /><br/>
+  <input type="text" id="phone" placeholder="Phone" /><br/>
+  <input type="text" id="company" placeholder="Company" /><br/>
+  <input type="text" id="trade" placeholder="Trade" /><br/>
+  <input type="text" id="ppe" placeholder="PPE" /><br/>
+  <input type="text" id="risk" placeholder="Risk" /><br/>
+  <input type="text" id="hazard" placeholder="Hazard" /><br/>
+  <input type="text" id="other" placeholder="Other" /><br/>
+  <input type="text" id="key" placeholder="Key" /><br/>
+  <button type="button" onclick="signIn()">Sign In</button>
+  <button type="button" onclick="signOut()">Sign Out</button>
+</form>
+
+<h3>Currently Signed-In</h3>
+<table id="activeTable">
+  <thead>
+    <tr><th>Name</th><th>Company</th><th>Sign-In Time</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwMccJvXYr0xJ1kSCVihg34MB39WPQxRy1EezOpE-5wMq9_kFRbpgH-O3UPJ7QtC6tf/exec'; // Replace with your deployed Apps Script web app URL
+
+  async function apiPost(data) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    return res.json();
+  }
+
+  async function signIn() {
+    const data = getFormData();
+    const response = await apiPost({...data, action: 'signIn'});
+    alert(response.message);
+    loadActive();
+  }
+
+  async function signOut() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+      alert("Please enter your name to sign out.");
+      return;
+    }
+    const response = await apiPost({action: 'signOut', name});
+    alert(response.message);
+    loadActive();
+  }
+
+  function getFormData() {
+    return {
+      name: document.getElementById('name').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      company: document.getElementById('company').value.trim(),
+      trade: document.getElementById('trade').value.trim(),
+      ppe: document.getElementById('ppe').value.trim(),
+      risk: document.getElementById('risk').value.trim(),
+      hazard: document.getElementById('hazard').value.trim(),
+      other: document.getElementById('other').value.trim(),
+      key: document.getElementById('key').value.trim()
+    };
+  }
+
+  async function loadActive() {
+    const response = await apiPost({action: 'getActive'});
+    if (response.status === 'success') {
+      const tbody = document.querySelector('#activeTable tbody');
+      tbody.innerHTML = '';
+      response.active.forEach(row => {
+        // row structure matches sheet columns
+        const tr = document.createElement('tr');
+        const nameTd = document.createElement('td');
+        nameTd.textContent = row[1];
+        const companyTd = document.createElement('td');
+        companyTd.textContent = row[3];
+        const timeTd = document.createElement('td');
+        timeTd.textContent = new Date(row[10]).toLocaleString();
+        tr.appendChild(nameTd);
+        tr.appendChild(companyTd);
+        tr.appendChild(timeTd);
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  loadActive();
+  // Refresh every 30 seconds
+  setInterval(loadActive, 30000);
+
+</script>
+
+</body>
+</html>
