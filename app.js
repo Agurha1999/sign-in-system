@@ -157,17 +157,20 @@ function exportAndClearLogs() {
   localStorage.removeItem('signInLogs');
 }
 
-// 📧 EmailJS
+// 📧 EmailJS - Sends CSV data inline with the template
 function sendEmailWithCSV(csv) {
   emailjs.send("service_z2jwxfw", "template_6yxcugi", {
     message: csv,
     to_email: "agurha1999@gmail.com"
   }, "rIlwvYJeOw3D2fOA1").then(() => {
-    console.log("Email sent.");
+    console.log("✅ Email sent successfully.");
+    alert("CSV emailed successfully.");
   }).catch(err => {
-    console.error("Email failed but logs were cleared anyway:", err);
+    console.error("❌ Email failed but logs were cleared anyway:", err);
+    alert("Failed to send email, but logs were still cleared.");
   });
 }
+
 
 // 🕒 Auto Weekly Export on Sunday 10 PM
 function checkWeeklyExport() {
