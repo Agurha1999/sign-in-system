@@ -56,7 +56,6 @@
     <button onclick="exportAndEmailAndClear()">⬇️ Export, Email & Clear Logs</button>
     <button onclick="emailLogsOnly()">📤 Email Logs</button>
     <button onclick="exportLogsOnly()">💾 Export Logs</button>
-
   </div>
 
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
@@ -65,8 +64,18 @@
   </script>
 
   <script>
+    // 🛑 Redirect if not admin
     if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
       window.location.href = 'login.html';
+    }
+
+    function logout() {
+      localStorage.removeItem('isAdminLoggedIn');
+      window.location.href = 'login.html';
+    }
+
+    function goHome() {
+      window.location.href = 'index.html';
     }
 
     function renderActiveWorkers() {
@@ -155,12 +164,9 @@
       input.value = '';
     }
 
-    function exportAndEmail() {
+    function generateCSVContent() {
       const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
-      if (logs.length === 0) {
-        alert("No data to export.");
-        return;
-      }
+      if (logs.length === 0) return null;
 
       const headers = ["Name", "Phone", "Company", "Trade", "PPE", "Risk", "Hazard", "Other", "Key", "SignIn Time", "SignOut Time"];
       const rows = logs.map(log => [
@@ -169,13 +175,21 @@
         log.key || '', log.signInTime, log.signOutTime || ''
       ]);
 
-      const csvContent = [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+      return [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    }
+
+    function exportAndEmailAndClear() {
+      const csvContent = generateCSVContent();
+      if (!csvContent) {
+        alert("No data to export.");
+        return;
+      }
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sign-in-logs-${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `sign-in-logs-${new Date().toISOString().replace(/[:]/g, '-')}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -183,7 +197,8 @@
 
       emailjs.send("service_z2jwxfw", "template_6yxcugi", {
         message: csvContent,
-        to_email: "agurha1999@gmail.com"
+        to_email: "agurha1999@gmail.com",
+        subject: "Weekly Contractor Logs"
       }).then(() => {
         alert("CSV emailed successfully.");
       }).catch((error) => {
@@ -195,18 +210,48 @@
       });
     }
 
-    function logout() {
-      localStorage.removeItem('isAdminLoggedIn');
-      window.location.href = 'login.html';
+    function emailLogsOnly() {
+      const csvContent = generateCSVContent();
+      if (!csvContent) {
+        alert("No logs to email.");
+        return;
+      }
+
+      emailjs.send("service_z2jwxfw", "template_6yxcugi", {
+        message: csvContent,
+        to_email: "agurha1999@gmail.com",
+        subject: "Contractor Logs Snapshot"
+      }).then(() => {
+        alert("Logs emailed successfully.");
+      }).catch((error) => {
+        console.error("EmailJS failed:", error);
+        alert("Failed to send email.");
+      });
     }
 
-    function goHome() {
-      window.location.href = 'index.html';
+    function exportLogsOnly() {
+      const csvContent = generateCSVContent();
+      if (!csvContent) {
+        alert("No logs to export.");
+        return;
+      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sign-in-logs-${new Date().toISOString().replace(/[:]/g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
+    // 🔄 Initialize
     renderKeys();
     renderActiveWorkers();
   </script>
 </body>
 </html>
+
 
