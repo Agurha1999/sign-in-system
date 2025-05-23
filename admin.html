@@ -79,7 +79,7 @@
 
         const nameCell = document.createElement('td');
         const img = document.createElement('img');
-        img.src = 'worker-icon.png';
+        img.src = 'worker-icon.png';  // Make sure this exists or replace with an emoji or SVG
         img.alt = 'Icon';
         img.className = 'worker-icon';
         nameCell.appendChild(img);
@@ -154,12 +154,10 @@
       input.value = '';
     }
 
-    function exportAndEmailAndClear() {
+    // Generates CSV content string for logs
+    function generateCSVContent() {
       const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
-      if (logs.length === 0) {
-        alert("No data to export.");
-        return;
-      }
+      if (logs.length === 0) return null;
 
       const headers = ["Name", "Phone", "Company", "Trade", "PPE", "Risk", "Hazard", "Other", "Key", "SignIn Time", "SignOut Time"];
       const rows = logs.map(log => [
@@ -167,9 +165,17 @@
         log.ppe, log.risk, log.hazard, log.other || '',
         log.key || '', log.signInTime, log.signOutTime || ''
       ]);
+      return [headers, ...rows].map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    }
 
-      const csvContent = [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    function exportAndEmailAndClear() {
+      const csvContent = generateCSVContent();
+      if (!csvContent) {
+        alert("No data to export.");
+        return;
+      }
 
+      // Download CSV
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -180,6 +186,7 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
+      // Email CSV
       emailjs.send("service_z2jwxfw", "template_6yxcugi", {
         message: csvContent,
         to_email: "agurha1999@gmail.com"
@@ -189,10 +196,47 @@
         console.error("EmailJS failed:", error);
         alert("Failed to send email.");
       }).finally(() => {
+        // Clear logs regardless of email success or failure
         localStorage.removeItem('signInLogs');
         localStorage.setItem('lastExport', new Date().toISOString().split('T')[0]);
         renderActiveWorkers();
       });
+    }
+
+    function emailLogsOnly() {
+      const csvContent = generateCSVContent();
+      if (!csvContent) {
+        alert("No logs to email.");
+        return;
+      }
+
+      emailjs.send("service_z2jwxfw", "template_6yxcugi", {
+        message: csvContent,
+        to_email: "agurha1999@gmail.com"
+      }).then(() => {
+        alert("Logs emailed successfully.");
+      }).catch((error) => {
+        console.error("EmailJS failed:", error);
+        alert("Failed to email logs.");
+      });
+    }
+
+    function exportLogsOnly() {
+      const csvContent = generateCSVContent();
+      if (!csvContent) {
+        alert("No logs to export.");
+        return;
+      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sign-in-logs-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     function logout() {
