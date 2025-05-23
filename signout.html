@@ -4,6 +4,26 @@
   <meta charset="UTF-8" />
   <title>Sign Out</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .form-container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    .error-message {
+      color: red;
+      margin-top: 10px;
+    }
+    .success-message {
+      color: green;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+    }
+  </style>
 </head>
 <body>
   <div class="form-container">
@@ -11,16 +31,17 @@
     <select id="signOutSelect">
       <option value="">Select a name</option>
     </select>
+    <br />
     <button id="submitSignOutBtn">Submit</button>
 
     <!-- Home button added -->
-    <button onclick="goHome()" style="margin-top: 10px;">Home</button>
+    <button onclick="goHome()">Home</button>
 
     <p id="errorMessage" class="error-message"></p>
+    <p id="successMessage" class="success-message"></p>
   </div>
 
   <script>
-    // Auto-populate dropdown on load
     document.addEventListener('DOMContentLoaded', () => {
       const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
       const select = document.getElementById('signOutSelect');
@@ -41,11 +62,14 @@
       });
     });
 
-    // Handle sign-out
     document.getElementById('submitSignOutBtn').addEventListener('click', () => {
       const select = document.getElementById('signOutSelect');
       const name = select.value;
       const errorMessage = document.getElementById('errorMessage');
+      const successMessage = document.getElementById('successMessage');
+
+      errorMessage.textContent = "";
+      successMessage.textContent = "";
 
       if (!name) {
         errorMessage.textContent = "Please select a name to sign out.";
@@ -65,16 +89,22 @@
 
       if (found) {
         localStorage.setItem('signInLogs', JSON.stringify(logs));
-        alert("Sign-out recorded successfully!");
-        window.location.href = 'index.html'; // ✅ Redirect to home
+        successMessage.textContent = "Sign-out recorded successfully! Redirecting to home page...";
+
+        // Disable button and select to prevent double submissions
+        select.disabled = true;
+        document.getElementById('submitSignOutBtn').disabled = true;
+
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 5000);
       } else {
         errorMessage.textContent = "No active sign-in found for this name.";
       }
     });
 
-    // Home button function
     function goHome() {
-      window.location.href = 'index.html'; // Change this if your home page is different
+      window.location.href = 'index.html';
     }
   </script>
 </body>
