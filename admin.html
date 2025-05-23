@@ -56,19 +56,16 @@
     <button onclick="exportAndEmail()">⬇️ Export, Email & Clear Logs</button>
   </div>
 
-  <!-- EmailJS -->
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
   <script>
     emailjs.init("rIlwvYJeOw3D2fOA1");
   </script>
 
   <script>
-    // Admin Authentication Redirect
     if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
 
-    // --- Populate Active Signed-In Workers Table ---
     function renderActiveWorkers() {
       const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
       const activeLogs = logs.filter(log => !log.signOutTime);
@@ -80,7 +77,7 @@
 
         const nameCell = document.createElement('td');
         const img = document.createElement('img');
-        img.src = 'worker-icon.png';
+        img.src = 'assets/worker-icon.png';
         img.alt = 'Icon';
         img.className = 'worker-icon';
         nameCell.appendChild(img);
@@ -103,7 +100,6 @@
       });
     }
 
-    // --- Key Management ---
     function loadKeys() {
       return JSON.parse(localStorage.getItem('keys') || '[]');
     }
@@ -156,7 +152,6 @@
       input.value = '';
     }
 
-    // --- Export Logs to CSV, Email via EmailJS and Clear Logs ---
     function exportAndEmail() {
       const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
       if (logs.length === 0) {
@@ -173,7 +168,6 @@
 
       const csvContent = [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
 
-      // Download CSV locally
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -184,21 +178,20 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // Send CSV content as text via EmailJS
       emailjs.send("service_z2jwxfw", "template_6yxcugi", {
         message: csvContent,
-        to_email: "agurha1999@gmail.com"  // Replace with actual recipient if needed
+        to_email: "agurha1999@gmail.com"
       }).then(() => {
         alert("CSV emailed successfully.");
-        localStorage.removeItem('signInLogs');
-        renderActiveWorkers();
       }).catch((error) => {
         console.error("EmailJS failed:", error);
         alert("Failed to send email.");
+      }).finally(() => {
+        localStorage.removeItem('signInLogs');
+        renderActiveWorkers();
       });
     }
 
-    // Logout & Home Navigation
     function logout() {
       localStorage.removeItem('isAdminLoggedIn');
       window.location.href = 'login.html';
@@ -208,9 +201,9 @@
       window.location.href = 'index.html';
     }
 
-    // On load, render keys and active workers
     renderKeys();
     renderActiveWorkers();
   </script>
 </body>
 </html>
+
