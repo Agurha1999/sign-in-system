@@ -1,0 +1,134 @@
+/* 🌄 Background & Typography */
+body {
+    font-family: Arial, sans-serif;
+    background: url('assets/bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* 🎯 Centered Main Button Group */
+  .center-buttons {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    text-align: center;
+  }
+  
+  /* 🖼️ Main Welcome Title */
+  h2 {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 2em;
+  }
+  
+  /* 🔘 Buttons: consistent style, extra size */
+  button {
+    background-color: #008CBA;
+    border: none;
+    color: white;
+    padding: 16px 30px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  }
+  
+  button:hover {
+    background-color: #005f77;
+  }
+  
+  /* 🧾 Form Layout */
+  .form-container,
+  .login-container,
+  .dashboard-container {
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 20px;
+    max-width: 500px;
+    margin: 50px auto;
+    border-radius: 10px;
+    text-align: center;
+  }
+  
+  /* 🖊️ Inputs & selects */
+  input,
+  select {
+    width: 90%;
+    max-width: 400px;
+    padding: 12px;
+    margin: 10px auto;
+    font-size: 16px;
+    border-radius: 5px;
+    border: none;
+  }
+  
+  /* 📦 Tab Buttons (if reused) */
+  .tabs {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* 📄 Table Styles for Admin */
+  table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: black;
+  }
+  
+  th,
+  td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  /* 👤 Worker icon in table */
+  .worker-icon {
+    width: 30px;
+    height: 30px;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  
+  /* ❌ Error Styling */
+  .error-message {
+    color: red;
+  }
+  
+  /* ⬇️ Bottom Button Positions */
+  .bottom-left,
+  .bottom-right {
+    position: fixed;
+    bottom: 20px;
+    z-index: 10;
+  }
+  
+  .bottom-left {
+    left: 20px;
+  }
+  
+  .bottom-right {
+    right: 20px;
+  }
+  
+  /* Mobile tweaks */
+  @media (max-width: 600px) {
+    .center-buttons {
+      flex-direction: column;
+    }
+  }
+  

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign Out</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="form-container">
+    <h2>Sign Out</h2>
+    <select id="signOutSelect">
+      <option value="">Select a name</option>
+    </select>
+    <button id="submitSignOutBtn">Submit</button>
+
+    <!-- Home button added -->
+    <button onclick="goHome()" style="margin-top: 10px;">Home</button>
+
+    <p id="errorMessage" class="error-message"></p>
+  </div>
+
+  <script>
+    // Auto-populate dropdown on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
+      const select = document.getElementById('signOutSelect');
+      select.innerHTML = '<option value="">Select a name</option>';
+      const activeNames = new Set();
+
+      logs.forEach(log => {
+        if (!log.signOutTime) {
+          activeNames.add(log.name);
+        }
+      });
+
+      activeNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+    });
+
+    // Handle sign-out
+    document.getElementById('submitSignOutBtn').addEventListener('click', () => {
+      const select = document.getElementById('signOutSelect');
+      const name = select.value;
+      const errorMessage = document.getElementById('errorMessage');
+
+      if (!name) {
+        errorMessage.textContent = "Please select a name to sign out.";
+        return;
+      }
+
+      const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
+      let found = false;
+
+      for (let i = logs.length - 1; i >= 0; i--) {
+        if (logs[i].name === name && !logs[i].signOutTime) {
+          logs[i].signOutTime = new Date().toLocaleString();
+          found = true;
+          break;
+        }
+      }
+
+      if (found) {
+        localStorage.setItem('signInLogs', JSON.stringify(logs));
+        alert("Sign-out recorded successfully!");
+        window.location.href = 'index.html'; // ✅ Redirect to home
+      } else {
+        errorMessage.textContent = "No active sign-in found for this name.";
+      }
+    });
+
+    // Home button function
+    function goHome() {
+      window.location.href = 'index.html'; // Change this if your home page is different
+    }
+  </script>
+</body>
+</html>

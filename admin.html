@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .worker-icon {
+      width: 24px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    button {
+      margin: 0 8px 12px 0;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    #keyList li {
+      margin-bottom: 8px;
+    }
+    #keyList button {
+      margin-left: 12px;
+      padding: 2px 8px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <h2>Currently Signed-In Workers</h2>
+    <table id="workersTable" border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+      <thead>
+        <tr style="background: #eee;">
+          <th>Worker</th>
+          <th>Company</th>
+          <th>Key</th>
+          <th>Sign-In Time</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <hr style="margin: 40px 0; border-color: #ccc;" />
+
+    <h2>Manage Keys</h2>
+    <div>
+      <input type="text" id="newKeyInput" placeholder="Enter new key name" />
+      <button onclick="addKey()">Add Key</button>
+    </div>
+    <ul id="keyList" style="list-style: none; padding: 0; margin-top: 20px;"></ul>
+
+    <hr style="margin: 40px 0; border-color: #ccc;" />
+
+    <button onclick="logout()">Logout</button>
+    <button onclick="goHome()">Home</button>
+    <button onclick="exportAndEmail()">⬇️ Export, Email & Clear Logs</button>
+  </div>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script>
+    emailjs.init("rIlwvYJeOw3D2fOA1");
+  </script>
+
+  <script>
+    // Admin Authentication Redirect
+    if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    // --- Populate Active Signed-In Workers Table ---
+    function renderActiveWorkers() {
+      const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
+      const activeLogs = logs.filter(log => !log.signOutTime);
+      const tbody = document.querySelector('#workersTable tbody');
+      tbody.innerHTML = '';
+
+      activeLogs.forEach(log => {
+        const row = document.createElement('tr');
+
+        const nameCell = document.createElement('td');
+        const img = document.createElement('img');
+        img.src = 'assets/worker-icon.png';
+        img.alt = 'Icon';
+        img.className = 'worker-icon';
+        nameCell.appendChild(img);
+        nameCell.appendChild(document.createTextNode(log.name));
+        row.appendChild(nameCell);
+
+        const companyCell = document.createElement('td');
+        companyCell.textContent = log.company;
+        row.appendChild(companyCell);
+
+        const keyCell = document.createElement('td');
+        keyCell.textContent = log.key || '-';
+        row.appendChild(keyCell);
+
+        const timeCell = document.createElement('td');
+        timeCell.textContent = log.signInTime;
+        row.appendChild(timeCell);
+
+        tbody.appendChild(row);
+      });
+    }
+
+    // --- Key Management ---
+    function loadKeys() {
+      return JSON.parse(localStorage.getItem('keys') || '[]');
+    }
+
+    function saveKeys(keys) {
+      localStorage.setItem('keys', JSON.stringify(keys));
+    }
+
+    function renderKeys() {
+      const keys = loadKeys();
+      const keyList = document.getElementById('keyList');
+      keyList.innerHTML = '';
+
+      keys.forEach((key, index) => {
+        const li = document.createElement('li');
+        li.textContent = key;
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.onclick = () => {
+          if (confirm(`Delete key "${key}"?`)) {
+            keys.splice(index, 1);
+            saveKeys(keys);
+            renderKeys();
+          }
+        };
+
+        li.appendChild(delBtn);
+        keyList.appendChild(li);
+      });
+    }
+
+    function addKey() {
+      const input = document.getElementById('newKeyInput');
+      const newKey = input.value.trim();
+      if (!newKey) {
+        alert("Please enter a key name.");
+        return;
+      }
+
+      const keys = loadKeys();
+      if (keys.includes(newKey)) {
+        alert("This key already exists.");
+        return;
+      }
+
+      keys.push(newKey);
+      saveKeys(keys);
+      renderKeys();
+      input.value = '';
+    }
+
+    // --- Export Logs to CSV, Email via EmailJS and Clear Logs ---
+    function exportAndEmail() {
+      const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
+      if (logs.length === 0) {
+        alert("No data to export.");
+        return;
+      }
+
+      const headers = ["Name", "Phone", "Company", "Trade", "PPE", "Risk", "Hazard", "Other", "Key", "SignIn Time", "SignOut Time"];
+      const rows = logs.map(log => [
+        log.name, log.phone, log.company, log.trade || '',
+        log.ppe, log.risk, log.hazard, log.other || '',
+        log.key || '', log.signInTime, log.signOutTime || ''
+      ]);
+
+      const csvContent = [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+
+      // Download CSV locally
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sign-in-logs-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // Send CSV content as text via EmailJS
+      emailjs.send("service_z2jwxfw", "template_6yxcugi", {
+        message: csvContent,
+        to_email: "agurha1999@gmail.com"  // Replace with actual recipient if needed
+      }).then(() => {
+        alert("CSV emailed successfully.");
+        localStorage.removeItem('signInLogs');
+        renderActiveWorkers();
+      }).catch((error) => {
+        console.error("EmailJS failed:", error);
+        alert("Failed to send email.");
+      });
+    }
+
+    // Logout & Home Navigation
+    function logout() {
+      localStorage.removeItem('isAdminLoggedIn');
+      window.location.href = 'login.html';
+    }
+
+    function goHome() {
+      window.location.href = 'index.html';
+    }
+
+    // On load, render keys and active workers
+    renderKeys();
+    renderActiveWorkers();
+  </script>
+</body>
+</html>
