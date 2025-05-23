@@ -1,7 +1,7 @@
 /* 🌄 Background & Typography */
 body {
     font-family: Arial, sans-serif;
-    background: url('assets/bg.jpg') no-repeat center center fixed;
+    background: url('bg.jpg') no-repeat center center fixed;
     background-size: cover;
     color: white;
     margin: 0;
