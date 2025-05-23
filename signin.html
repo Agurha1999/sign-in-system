@@ -34,6 +34,12 @@
       color: red;
       margin-top: 10px;
     }
+
+    .success-message {
+      color: green;
+      margin-top: 10px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -75,6 +81,7 @@
     <button onclick="goHome()">Home</button>
 
     <p id="errorMessage" class="error-message"></p>
+    <p id="successMessage" class="success-message"></p>
   </div>
 
   <script>
@@ -82,6 +89,7 @@
       const form = document.getElementById('signInForm');
       const keySelect = document.getElementById('keySelect');
       const errorMessage = document.getElementById('errorMessage');
+      const successMessage = document.getElementById('successMessage');
 
       const keys = JSON.parse(localStorage.getItem('keys') || '[]');
       if (!keys.length) {
@@ -101,6 +109,9 @@
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        errorMessage.textContent = "";
+        successMessage.textContent = "";
 
         const name = document.getElementById('name').value.trim();
         const phone = document.getElementById('phone').value.trim();
@@ -146,9 +157,13 @@
         logs.push(data);
         localStorage.setItem('signInLogs', JSON.stringify(logs));
 
-        alert("Sign-In recorded successfully!");
+        successMessage.textContent = "Sign-In recorded successfully! Redirecting to home page...";
+
         form.reset();
-        window.location.href = 'index.html';
+
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 5000);
       });
     });
 
