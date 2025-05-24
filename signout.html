@@ -20,8 +20,15 @@
       font-weight: bold;
     }
     button {
-      margin-top: 10px;
       padding: 10px 20px;
+      cursor: pointer;
+    }
+    /* Flex container for buttons */
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      align-items: center;
     }
   </style>
 </head>
@@ -31,11 +38,12 @@
     <select id="signOutSelect">
       <option value="">Select a name</option>
     </select>
-    <br />
-    <button id="submitSignOutBtn">Submit</button>
 
-    <!-- Home button added -->
-    <button onclick="goHome()">Home</button>
+    <!-- Wrap buttons in flex container -->
+    <div class="button-row">
+      <button onclick="goHome()">Home</button>
+      <button id="submitSignOutBtn">Submit</button>
+    </div>
 
     <p id="errorMessage" class="error-message"></p>
     <p id="successMessage" class="success-message"></p>
@@ -91,7 +99,6 @@
         localStorage.setItem('signInLogs', JSON.stringify(logs));
         successMessage.textContent = "Sign-out recorded successfully! Redirecting to home page...";
 
-        // Disable button and select to prevent double submissions
         select.disabled = true;
         document.getElementById('submitSignOutBtn').disabled = true;
 
