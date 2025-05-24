@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 🔑 Populate Key Dropdown
   const keySelect = document.getElementById('keySelect');
   if (keySelect) {
     const keys = JSON.parse(localStorage.getItem('keys') || '[]');
@@ -65,12 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renderKeys();
-
-  // Run weekly export check once immediately on load
   checkWeeklyExport();
-
-  // Then check every minute while the page is open
-  setInterval(checkWeeklyExport, 60 * 1000); // ⏱ Check every minute
+  setInterval(checkWeeklyExport, 60 * 1000);
 });
 
 // 🚪 Populate Sign-Out List
@@ -141,8 +136,8 @@ function exportAndClearLogs() {
     `"${log.ppe}"`, `"${log.risk}"`, `"${log.hazard}"`, `"${log.other || ''}"`,
     `"${log.key || ''}"`, `"${log.signInTime}"`, `"${log.signOutTime || ''}"`
   ]);
-
   const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -152,44 +147,37 @@ function exportAndClearLogs() {
   document.body.removeChild(link);
 
   sendEmailWithCSV(csvContent);
-
-  // Clear logs regardless of email success or failure
   localStorage.removeItem('signInLogs');
 }
 
-// 📧 EmailJS - Sends CSV data inline with the template
-function sendEmailWithCSV(csv) {
+// 📧 EmailJS - Sends CSV via your template
+function sendEmailWithCSV(csvContent) {
   emailjs.send("service_z2jwxfw", "template_6yxcugi", {
-    message: csv,
-    to_email: "agurha1999@gmail.com"
+    message: csvContent,
+    to_email: "agurha1999@gmail.com",
+    from_name: "Aman"
   }, "rIlwvYJeOw3D2fOA1").then(() => {
-    console.log("✅ Email sent successfully.");
     alert("CSV emailed successfully.");
   }).catch(err => {
-    console.error("❌ Email failed but logs were cleared anyway:", err);
+    console.error("Email failed:", err);
     alert("Failed to send email, but logs were still cleared.");
   });
 }
 
-
-// 🕒 Auto Weekly Export on Sunday 10 PM
+// 🕒 Auto Weekly Export
 function checkWeeklyExport() {
   const now = new Date();
   const lastExport = parseInt(localStorage.getItem('lastExportTime') || "0");
   const nowTime = now.getTime();
-
-  const isSunday = now.getDay() === 0;
-  const isTenPM = now.getHours() === 22 && now.getMinutes() === 0;
-
   const oneWeek = 7 * 24 * 60 * 60 * 1000;
-  if (isSunday && isTenPM && (nowTime - lastExport > oneWeek)) {
-    console.log("⏳ Weekly auto-export triggered.");
+
+  if (now.getDay() === 0 && now.getHours() === 22 && now.getMinutes() === 0 && (nowTime - lastExport > oneWeek)) {
     exportAndClearLogs();
     localStorage.setItem('lastExportTime', nowTime.toString());
   }
 }
 
-// 🔐 Admin Key Rendering
+// 🔐 Admin Key Management
 function loadKeys() {
   return JSON.parse(localStorage.getItem('keys') || '[]');
 }
@@ -226,89 +214,4 @@ function addKey() {
     renderKeys();
   }
   input.value = '';
-}
-function generateCSVContent() {
-  const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
-  if (logs.length === 0) return null;
-
-  const headers = ["Name", "Phone", "Company", "Trade", "PPE", "Risk", "Hazard", "Other", "Key", "SignIn Time", "SignOut Time"];
-  const rows = logs.map(log => [
-    log.name, log.phone, log.company, log.trade || '',
-    log.ppe, log.risk, log.hazard, log.other || '',
-    log.key || '', log.signInTime, log.signOutTime || ''
-  ]);
-  return [headers, ...rows].map(e => e.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
-}
-
-function exportAndEmailAndClear() {
-  const csvContent = generateCSVContent();
-  if (!csvContent) {
-    alert("No data to export.");
-    return;
-  }
-
-  // Export locally
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-  a.href = url;
-  a.download = `sign-in-logs-${timestamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  // Email
-  emailjs.send("service_z2jwxfw", "template_6yxcugi", {
-    message: csvContent,
-    to_email: "agurha1999@gmail.com",
-    subject: "Weekly Contractor Logs"
-  }).then(() => {
-    alert("CSV emailed successfully.");
-  }).catch((error) => {
-    console.error("EmailJS failed:", error);
-    alert("Failed to send email.");
-  }).finally(() => {
-    localStorage.removeItem('signInLogs');
-    renderActiveWorkers();
-  });
-}
-
-function emailLogsOnly() {
-  const csvContent = generateCSVContent();
-  if (!csvContent) {
-    alert("No logs to email.");
-    return;
-  }
-
-  emailjs.send("service_z2jwxfw", "template_6yxcugi", {
-    message: csvContent,
-    to_email: "agurha1999@gmail.com",
-    subject: "Contractor Logs Snapshot"
-  }).then(() => {
-    alert("Logs emailed successfully.");
-  }).catch((error) => {
-    console.error("EmailJS failed:", error);
-    alert("Failed to send email.");
-  });
-}
-
-function exportLogsOnly() {
-  const csvContent = generateCSVContent();
-  if (!csvContent) {
-    alert("No logs to export.");
-    return;
-  }
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-  a.href = url;
-  a.download = `sign-in-logs-${timestamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
