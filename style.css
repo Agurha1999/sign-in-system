@@ -72,13 +72,16 @@ button:hover {
 
 /* 🖊️ Input Fields */
 input,
-select {
+select,
+textarea {
   width: 100%;
   padding: 12px;
-  margin: 10px 0;
+  margin: 6px 0 2px; /* Slightly less bottom margin for better spacing with errors */
   font-size: 1rem;
   border-radius: 6px;
   border: none;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
 /* 📄 Tables */
@@ -148,3 +151,13 @@ td {
   }
 }
 
+/* 🛑 Real-time Validation Error Messages Next to Inputs */
+.input-error {
+  color: #ff4c4c;
+  font-size: 0.85rem;
+  margin-top: 2px;
+  display: block;
+  min-height: 18px; /* keep space so layout doesn't jump */
+  font-weight: bold;
+  text-align: left;
+}

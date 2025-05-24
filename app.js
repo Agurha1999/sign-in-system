@@ -16,30 +16,89 @@ function logToGoogleSheet(data) {
   }).catch(error => console.error("Google Sheets logging failed:", error));
 }
 
+// 🛑 Real-time Validation Functions
+function validateField(field) {
+  const value = field.value.trim();
+  const name = field.name;
+  let errorMessage = '';
+
+  switch(name) {
+    case 'name':
+    case 'phone':
+    case 'company':
+    case 'ppe':
+    case 'risk':
+    case 'hazard':
+    case 'keySelect':
+      if (!value) {
+        errorMessage = 'This field is required';
+      }
+      break;
+    // You can add more validations here if needed (e.g., phone number format)
+  }
+
+  setError(field, errorMessage);
+  return errorMessage === '';
+}
+
+function setError(field, message) {
+  let errorElem = field.nextElementSibling;
+  // If next element is not error-message, create it
+  if (!errorElem || !errorElem.classList.contains('input-error')) {
+    errorElem = document.createElement('span');
+    errorElem.className = 'input-error';
+    field.parentNode.insertBefore(errorElem, field.nextSibling);
+  }
+  errorElem.textContent = message;
+}
+
 // 📥 DOM Load
 document.addEventListener('DOMContentLoaded', () => {
   const signInForm = document.getElementById('signInForm');
   if (signInForm) {
+    // Add real-time validation listeners
+    const inputsToValidate = ['name', 'phone', 'company', 'ppe', 'risk', 'hazard', 'keySelect'];
+    inputsToValidate.forEach(id => {
+      const field = document.getElementById(id);
+      if (field) {
+        field.addEventListener('input', () => validateField(field));
+        // For selects, listen for change event too
+        if (field.tagName.toLowerCase() === 'select') {
+          field.addEventListener('change', () => validateField(field));
+        }
+      }
+    });
+
     signInForm.addEventListener('submit', function (e) {
       e.preventDefault();
+
+      // Validate all fields, prevent submission if any invalid
+      let allValid = true;
+      inputsToValidate.forEach(id => {
+        const field = document.getElementById(id);
+        if (field) {
+          const valid = validateField(field);
+          if (!valid) allValid = false;
+        }
+      });
+      if (!allValid) {
+        alert("Please fix the errors in the form before submitting.");
+        return;
+      }
+
       const data = {
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        company: document.getElementById('company').value,
-        trade: document.getElementById('trade').value,
-        ppe: document.getElementById('ppe').value,
-        risk: document.getElementById('risk').value,
-        hazard: document.getElementById('hazard').value,
-        other: document.getElementById('other').value,
+        name: document.getElementById('name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        company: document.getElementById('company').value.trim(),
+        trade: document.getElementById('trade').value.trim(),
+        ppe: document.getElementById('ppe').value.trim(),
+        risk: document.getElementById('risk').value.trim(),
+        hazard: document.getElementById('hazard').value.trim(),
+        other: document.getElementById('other').value.trim(),
         key: document.getElementById('keySelect')?.value || '',
         signInTime: new Date().toLocaleString(),
         signOutTime: null
       };
-
-      if (!data.name || !data.phone || !data.company || !data.ppe || !data.risk || !data.hazard || !data.key) {
-        alert("Please fill in all required fields marked with *.");
-        return;
-      }
 
       const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
       logs.push(data);
@@ -48,6 +107,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       alert("Sign-In recorded successfully!");
       signInForm.reset();
+
+      // Clear all error messages after reset
+      inputsToValidate.forEach(id => {
+        const field = document.getElementById(id);
+        if (field) setError(field, '');
+      });
+
       showTab('signOut');
     });
   }
