@@ -25,9 +25,17 @@
       resize: vertical; /* allow vertical resize if user wants */
     }
 
+    /* Wrap buttons in a flex container */
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      align-items: center;
+    }
+
     .form-container button {
       padding: 10px 20px;
-      margin-top: 10px;
+      cursor: pointer;
     }
 
     .error-message {
@@ -75,10 +83,11 @@
         <option value="">Select Key</option>
       </select>
 
-      <button type="submit">Submit</button>
+      <div class="button-row">
+        <button type="button" onclick="goHome()">Home</button>
+        <button type="submit">Submit</button>
+      </div>
     </form>
-
-    <button onclick="goHome()">Home</button>
 
     <p id="errorMessage" class="error-message"></p>
     <p id="successMessage" class="success-message"></p>
