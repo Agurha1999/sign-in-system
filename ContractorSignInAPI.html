@@ -7,9 +7,6 @@
     body { font-family: Arial, sans-serif; margin: 20px; max-width: 500px; }
     input, select, button { margin: 5px 0; padding: 8px; width: 100%; max-width: 400px; box-sizing: border-box; }
     button { cursor: pointer; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #eee; }
     @media (max-width: 600px) {
       body { margin: 10px; }
       input, button { max-width: 100%; }
@@ -34,16 +31,8 @@
     <button type="button" onclick="signOut()">Sign Out</button>
   </form>
 
-  <h3>Currently Signed-In</h3>
-  <table id="activeTable" aria-live="polite" aria-label="Currently signed-in contractors">
-    <thead>
-      <tr><th>Name</th><th>Company</th><th>Sign-In Time</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwMccJvXYr0xJ1kSCVihg34MB39WPQxRy1EezOpE-5wMq9_kFRbpgH-O3UPJ7QtC6tf/exec'; // Your Apps Script URL
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwMccJvXYr0xJ1kSCVihg34MB39WPQxRy1EezOpE-5wMq9_kFRbpgH-O3UPJ7QtC6tf/exec';
 
     async function apiPost(data) {
       try {
@@ -70,7 +59,6 @@
       alert(response.message);
       if (response.status === 'success') {
         clearForm();
-        loadActive();
       }
     }
 
@@ -84,7 +72,6 @@
       alert(response.message);
       if (response.status === 'success') {
         clearForm();
-        loadActive();
       }
     }
 
@@ -105,42 +92,7 @@
     function clearForm() {
       document.getElementById('signForm').reset();
     }
-
-    async function loadActive() {
-      const response = await apiPost({action: 'getActive'});
-      if (response.status === 'success') {
-        const tbody = document.querySelector('#activeTable tbody');
-        tbody.innerHTML = '';
-        response.active.forEach(row => {
-          // Adjust indexes below to your sheet's data structure:
-          // Example: row[1] = Name, row[3] = Company, row[10] = sign-in timestamp
-          const name = row[1] || 'N/A';
-          const company = row[3] || 'N/A';
-          const timeStr = row[10] ? new Date(row[10]).toLocaleString() : 'Unknown';
-
-          const tr = document.createElement('tr');
-          const nameTd = document.createElement('td');
-          nameTd.textContent = name;
-          const companyTd = document.createElement('td');
-          companyTd.textContent = company;
-          const timeTd = document.createElement('td');
-          timeTd.textContent = timeStr;
-
-          tr.appendChild(nameTd);
-          tr.appendChild(companyTd);
-          tr.appendChild(timeTd);
-          tbody.appendChild(tr);
-        });
-      } else {
-        alert('Failed to load active sign-ins: ' + response.message);
-      }
-    }
-
-    // Load active sign-ins on page load and every 30 seconds
-    loadActive();
-    setInterval(loadActive, 30000);
   </script>
 
 </body>
 </html>
-
