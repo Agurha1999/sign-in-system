@@ -4,33 +4,38 @@
   <meta charset="UTF-8" />
   <title>Contractor Sign In/Out</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    input, select, button { margin: 5px 0; padding: 6px; width: 100%; max-width: 400px; display: block; }
+    body { font-family: Arial, sans-serif; margin: 20px; max-width: 500px; }
+    input, select, button { margin: 5px 0; padding: 8px; width: 100%; max-width: 400px; box-sizing: border-box; }
+    button { cursor: pointer; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     th { background-color: #eee; }
+    @media (max-width: 600px) {
+      body { margin: 10px; }
+      input, button { max-width: 100%; }
+    }
   </style>
 </head>
 <body>
 
   <h2>Contractor Sign-In/Sign-Out</h2>
 
-  <form id="signForm">
-    <input type="text" id="name" placeholder="Name" required />
-    <input type="text" id="phone" placeholder="Phone" />
-    <input type="text" id="company" placeholder="Company" />
-    <input type="text" id="trade" placeholder="Trade" />
-    <input type="text" id="ppe" placeholder="PPE" />
-    <input type="text" id="risk" placeholder="Risk" />
-    <input type="text" id="hazard" placeholder="Hazard" />
-    <input type="text" id="other" placeholder="Other" />
-    <input type="text" id="key" placeholder="Key" />
+  <form id="signForm" onsubmit="return false;">
+    <input type="text" id="name" placeholder="Name (required)" required autocomplete="off" />
+    <input type="text" id="phone" placeholder="Phone" autocomplete="off" />
+    <input type="text" id="company" placeholder="Company" autocomplete="off" />
+    <input type="text" id="trade" placeholder="Trade" autocomplete="off" />
+    <input type="text" id="ppe" placeholder="PPE" autocomplete="off" />
+    <input type="text" id="risk" placeholder="Risk" autocomplete="off" />
+    <input type="text" id="hazard" placeholder="Hazard" autocomplete="off" />
+    <input type="text" id="other" placeholder="Other" autocomplete="off" />
+    <input type="text" id="key" placeholder="Key" autocomplete="off" />
     <button type="button" onclick="signIn()">Sign In</button>
     <button type="button" onclick="signOut()">Sign Out</button>
   </form>
 
   <h3>Currently Signed-In</h3>
-  <table id="activeTable">
+  <table id="activeTable" aria-live="polite" aria-label="Currently signed-in contractors">
     <thead>
       <tr><th>Name</th><th>Company</th><th>Sign-In Time</th></tr>
     </thead>
@@ -38,15 +43,21 @@
   </table>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwMccJvXYr0xJ1kSCVihg34MB39WPQxRy1EezOpE-5wMq9_kFRbpgH-O3UPJ7QtC6tf/exec'; // Replace with your own Apps Script URL if needed
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwMccJvXYr0xJ1kSCVihg34MB39WPQxRy1EezOpE-5wMq9_kFRbpgH-O3UPJ7QtC6tf/exec'; // Your Apps Script URL
 
     async function apiPost(data) {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-      });
-      return res.json();
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Network response was not ok');
+        return await res.json();
+      } catch (error) {
+        alert('Error communicating with server: ' + error.message);
+        return {status: 'error', message: error.message};
+      }
     }
 
     async function signIn() {
@@ -57,7 +68,10 @@
       }
       const response = await apiPost({...data, action: 'signIn'});
       alert(response.message);
-      loadActive();
+      if (response.status === 'success') {
+        clearForm();
+        loadActive();
+      }
     }
 
     async function signOut() {
@@ -68,7 +82,10 @@
       }
       const response = await apiPost({action: 'signOut', name});
       alert(response.message);
-      loadActive();
+      if (response.status === 'success') {
+        clearForm();
+        loadActive();
+      }
     }
 
     function getFormData() {
@@ -85,30 +102,45 @@
       };
     }
 
+    function clearForm() {
+      document.getElementById('signForm').reset();
+    }
+
     async function loadActive() {
       const response = await apiPost({action: 'getActive'});
       if (response.status === 'success') {
         const tbody = document.querySelector('#activeTable tbody');
         tbody.innerHTML = '';
         response.active.forEach(row => {
+          // Adjust indexes below to your sheet's data structure:
+          // Example: row[1] = Name, row[3] = Company, row[10] = sign-in timestamp
+          const name = row[1] || 'N/A';
+          const company = row[3] || 'N/A';
+          const timeStr = row[10] ? new Date(row[10]).toLocaleString() : 'Unknown';
+
           const tr = document.createElement('tr');
           const nameTd = document.createElement('td');
-          nameTd.textContent = row[1];
+          nameTd.textContent = name;
           const companyTd = document.createElement('td');
-          companyTd.textContent = row[3];
+          companyTd.textContent = company;
           const timeTd = document.createElement('td');
-          timeTd.textContent = new Date(row[10]).toLocaleString();
+          timeTd.textContent = timeStr;
+
           tr.appendChild(nameTd);
           tr.appendChild(companyTd);
           tr.appendChild(timeTd);
           tbody.appendChild(tr);
         });
+      } else {
+        alert('Failed to load active sign-ins: ' + response.message);
       }
     }
 
+    // Load active sign-ins on page load and every 30 seconds
     loadActive();
     setInterval(loadActive, 30000);
   </script>
 
 </body>
 </html>
+
