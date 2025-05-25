@@ -39,9 +39,6 @@
 
 <script>
   const API_URL = 'https://script.google.com/macros/s/AKfycbwMccJvXYr0xJ1kSCVihg34MB39WPQxRy1EezOpE-5wMq9_kFRbpgH-O3UPJ7QtC6tf/exec';
-</script>
-
-'; // Replace with your deployed Apps Script web app URL
 
   async function apiPost(data) {
     const res = await fetch(API_URL, {
@@ -90,7 +87,6 @@
       const tbody = document.querySelector('#activeTable tbody');
       tbody.innerHTML = '';
       response.active.forEach(row => {
-        // row structure matches sheet columns
         const tr = document.createElement('tr');
         const nameTd = document.createElement('td');
         nameTd.textContent = row[1];
@@ -107,10 +103,5 @@
   }
 
   loadActive();
-  // Refresh every 30 seconds
   setInterval(loadActive, 30000);
-
 </script>
-
-</body>
-</html>
