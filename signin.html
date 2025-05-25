@@ -21,10 +21,11 @@
     }
 
     #comments {
-      height: 40px;
-      resize: vertical;
+      height: 40px; /* smaller height */
+      resize: vertical; /* allow vertical resize if user wants */
     }
 
+    /* Wrap buttons in a flex container */
     .button-row {
       display: flex;
       justify-content: space-between;
@@ -47,22 +48,6 @@
       margin-top: 10px;
       font-weight: bold;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 30px;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #eee;
-    }
   </style>
 </head>
 <body>
@@ -73,7 +58,7 @@
       <input type="text" id="phone" placeholder="Phone *" required />
       <input type="text" id="company" placeholder="Company *" required />
       <input type="text" id="trade" placeholder="Trade" />
-
+      
       <select id="ppe" required>
         <option disabled selected>Do you have all PPE to safely complete the job? *</option>
         <option value="I am fully equipped to carry out the job safely">I am fully equipped to carry out the job safely</option>
@@ -92,10 +77,10 @@
         <option value="Other (explain in comments)">Other (explain in comments)</option>
       </select>
 
-      <textarea id="comments" placeholder="Comments (required if selecting 'Other')"></textarea>
+      <textarea id="comments" placeholder="Comments (required if selecting 'Other')" rows="1"></textarea>
 
       <select id="keySelect" required>
-        <option value="">Select Key *</option>
+        <option value="">Select Key</option>
       </select>
 
       <div class="button-row">
@@ -106,6 +91,7 @@
 
     <p id="errorMessage" class="error-message"></p>
     <p id="successMessage" class="success-message"></p>
+  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -114,7 +100,6 @@
       const errorMessage = document.getElementById('errorMessage');
       const successMessage = document.getElementById('successMessage');
 
-      // Load keys into dropdown from localStorage
       const keys = JSON.parse(localStorage.getItem('keys') || '[]');
       if (!keys.length) {
         const opt = document.createElement('option');
@@ -133,6 +118,7 @@
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
+
         errorMessage.textContent = "";
         successMessage.textContent = "";
 
@@ -151,6 +137,7 @@
           return;
         }
 
+        // If any dropdown is "Other", require a comment
         if (
           (ppe === "Other (explain in comments)" ||
            risk === "Other (explain in comments)" ||
@@ -161,9 +148,7 @@
           return;
         }
 
-        const signIns = JSON.parse(localStorage.getItem('signIns') || '[]');
-
-        const newEntry = {
+        const data = {
           name,
           phone,
           company,
@@ -171,41 +156,25 @@
           ppe,
           risk,
           hazard,
-          other: comments,
+          comments,
           key,
-          signInTime: new Date().toISOString(),
+          signInTime: new Date().toLocaleString(),
           signOutTime: null
         };
 
-        signIns.push(newEntry);
-        localStorage.setItem('signIns', JSON.stringify(signIns));
+        const logs = JSON.parse(localStorage.getItem('signInLogs') || '[]');
+        logs.push(data);
+        localStorage.setItem('signInLogs', JSON.stringify(logs));
 
         successMessage.textContent = "Sign-In recorded successfully! Redirecting to home page...";
+
         form.reset();
+
         setTimeout(() => {
           window.location.href = 'index.html';
         }, 5000);
-        loadActive();
       });
-
-      loadActive();
-      setInterval(loadActive, 30000);
     });
-
-    function loadActive() {
-      const signIns = JSON.parse(localStorage.getItem('signIns') || '[]');
-      const tbody = document.querySelector('#activeTable tbody');
-      tbody.innerHTML = '';
-      signIns.filter(entry => !entry.signOutTime).forEach(entry => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${entry.name}</td>
-          <td>${entry.company}</td>
-          <td>${new Date(entry.signInTime).toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
 
     function goHome() {
       window.location.href = 'index.html';
